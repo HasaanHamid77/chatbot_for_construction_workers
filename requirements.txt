@@ -1,0 +1,13 @@
+runpod
+vllm
+sentence-transformers
+faiss-cpu
+pypdf
+python-docx
+numpy
+
+# LangChain for high-quality document processing
+langchain
+langchain-community
+docx2txt
+unstructured
