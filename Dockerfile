@@ -15,14 +15,3 @@ COPY documents/ ./documents/
 
 # RunPod serverless will call handler.py
 CMD ["python", "-u", "handler.py"]
-```
-
----
-
-## **FILE 5: .dockerignore**
-```
-__pycache__
-*.pyc
-.git
-.env
-*.md
