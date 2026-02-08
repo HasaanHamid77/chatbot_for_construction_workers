@@ -1,5 +1,4 @@
 runpod
-vllm
 sentence-transformers
 faiss-cpu
 pypdf
