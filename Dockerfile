@@ -1,17 +1,14 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install only what is needed
+RUN pip install --no-cache-dir \
+    runpod \
+    torch \
+    transformers \
+    accelerate
 
-# Copy code
 COPY handler.py .
-COPY rag_service.py .
 
-# Copy documents (add your PDFs/DOCX here)
-COPY documents/ ./documents/
-
-# RunPod serverless will call handler.py
 CMD ["python", "-u", "handler.py"]
