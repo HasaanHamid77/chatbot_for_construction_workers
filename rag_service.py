@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 
-# LangChain imports
+# LangChain 
 from langchain_community.document_loaders import (
     PyPDFLoader, 
     Docx2txtLoader, 
