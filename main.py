@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional, List
-from handler import startup, generate, rag
+import handler  # Import the module itself, not the variables
 
 app = FastAPI(title="Construction Assistant API")
 
@@ -30,7 +30,7 @@ class ChatResponse(BaseModel):
 @app.on_event("startup")
 def load():
     """Load model and RAG on startup."""
-    startup()
+    handler.startup()  # This initializes handler.rag
 
 
 @app.get("/")
@@ -39,7 +39,7 @@ def health():
     return {
         "status": "running",
         "model": "Qwen2.5-1.5B-Instruct",
-        "documents_loaded": len(rag.documents) if rag else 0
+        "documents_loaded": len(handler.rag.documents) if handler.rag else 0
     }
 
 
@@ -72,10 +72,10 @@ def chat(request: ChatRequest):
     ])
     
     # Search for relevant documents using RAG
-    context, citations = rag.search(message, top_k=4)
+    context, citations = handler.rag.search(message, top_k=4)
     
     # Generate response with context and history
-    response_text = generate(
+    response_text = handler.generate(
         user_message=message,
         context=context,
         history=history_text
@@ -140,7 +140,7 @@ def list_sessions():
 def get_stats():
     """Get system statistics."""
     return {
-        "documents_loaded": len(rag.documents) if rag else 0,
+        "documents_loaded": len(handler.rag.documents) if handler.rag else 0,
         "active_sessions": len(conversations),
         "total_messages": sum(len(conv) for conv in conversations.values())
     }
