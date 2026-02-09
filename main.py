@@ -7,9 +7,15 @@ app = FastAPI()
 def load():
     startup()
 
+# @app.post("/chat")
+# def chat(payload: dict):
+#     message = payload.get("message", "")
+#     if not message:
+#         return {"error": "No message provided"}
+#     return {"response": generate(message)}
+
 @app.post("/chat")
 def chat(payload: dict):
     message = payload.get("message", "")
-    if not message:
-        return {"error": "No message provided"}
-    return {"response": generate(message)}
+    print("Received:", message, flush=True)
+    return {"response": "FastAPI endpoint works"}
