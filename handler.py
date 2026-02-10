@@ -14,14 +14,13 @@ def startup():
     print("Loading tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
-    print("Loading model with 4-bit quantization...")
+    print("Loading model with 8-bit quantization...")
     
-    # Configure 4-bit quantization for faster inference and less memory
+    # Configure 8-bit quantization for balanced speed and quality
     quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4"
+        load_in_8bit=True,
+        llm_int8_threshold=6.0,
+        llm_int8_has_fp16_weight=False
     )
     
     model = AutoModelForCausalLM.from_pretrained(
@@ -31,7 +30,7 @@ def startup():
         trust_remote_code=True
     )
     
-    print("✓ Model loaded with 4-bit quantization")
+    print("✓ Model loaded with 8-bit quantization")
 
     print("Loading RAG...")
     rag = RAGService("./documents")
