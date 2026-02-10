@@ -12,3 +12,4 @@ docx2txt
 unstructured
 accelerate
 uvicorn
+bitsandbytes
