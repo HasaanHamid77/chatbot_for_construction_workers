@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from rag_service import RAGService
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
@@ -11,30 +11,18 @@ rag = None
 def startup():
     global tokenizer, model, rag
 
-    print("Loading tokenizer...")
+    print("Loading model...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    
-    print("Loading model with 8-bit quantization...")
-    
-    # Configure 8-bit quantization for balanced speed and quality
-    quantization_config = BitsAndBytesConfig(
-        load_in_8bit=True,
-        llm_int8_threshold=6.0,
-        llm_int8_has_fp16_weight=False
-    )
-    
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
-        quantization_config=quantization_config,
-        device_map="auto",
-        trust_remote_code=True
+        torch_dtype=torch.float16,
+        device_map="auto"
     )
-    
-    print("✓ Model loaded with 8-bit quantization")
+    print("Model loaded")
 
     print("Loading RAG...")
     rag = RAGService("./documents")
-    print("✓ RAG ready")
+    print("RAG ready")
 
 
 def build_system_prompt():
@@ -197,15 +185,14 @@ def generate(user_message: str, context: str = "", history: str = ""):
     # Tokenize
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
-    # Generate with optimized parameters for speed
+    # Generate
     outputs = model.generate(
         **inputs,
         max_new_tokens=512,
         temperature=0.7,
         top_p=0.9,
         do_sample=True,
-        pad_token_id=tokenizer.eos_token_id,
-        use_cache=True  # Enable KV cache for faster generation
+        pad_token_id=tokenizer.eos_token_id
     )
     
     # Decode and extract response
