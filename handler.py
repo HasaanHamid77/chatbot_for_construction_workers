@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from rag_service import RAGService
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
@@ -11,18 +11,31 @@ rag = None
 def startup():
     global tokenizer, model, rag
 
-    print("Loading model...")
+    print("Loading tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    
+    print("Loading model with 4-bit quantization...")
+    
+    # Configure 4-bit quantization for faster inference and less memory
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4"
+    )
+    
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
-        torch_dtype=torch.float16,
-        device_map="auto"
+        quantization_config=quantization_config,
+        device_map="auto",
+        trust_remote_code=True
     )
-    print("Model loaded")
+    
+    print("✓ Model loaded with 4-bit quantization")
 
     print("Loading RAG...")
     rag = RAGService("./documents")
-    print("RAG ready")
+    print("✓ RAG ready")
 
 
 def build_system_prompt():
@@ -185,14 +198,15 @@ def generate(user_message: str, context: str = "", history: str = ""):
     # Tokenize
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     
-    # Generate
+    # Generate with optimized parameters for speed
     outputs = model.generate(
         **inputs,
         max_new_tokens=512,
         temperature=0.7,
         top_p=0.9,
         do_sample=True,
-        pad_token_id=tokenizer.eos_token_id
+        pad_token_id=tokenizer.eos_token_id,
+        use_cache=True  # Enable KV cache for faster generation
     )
     
     # Decode and extract response
