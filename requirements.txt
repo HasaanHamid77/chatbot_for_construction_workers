@@ -13,3 +13,4 @@ unstructured
 accelerate
 uvicorn
 bitsandbytes
+peft

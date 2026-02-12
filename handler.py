@@ -1,30 +1,53 @@
 import torch
+import re
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
 from rag_service import RAGService
 
-MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
+# =========================
+# MODEL CONFIGURATION
+# =========================
+
+BASE_MODEL = "tiiuae/falcon-rw-1b"
+PEFT_MODEL = "ShivomH/Falcon-1B-Mental-Health-v2"
 
 tokenizer = None
 model = None
 rag = None
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# =========================
+# STARTUP
+# =========================
 
 def startup():
     global tokenizer, model, rag
 
-    print("Loading model...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
-        torch_dtype=torch.float16,
+    print("Loading base model...")
+    base_model = AutoModelForCausalLM.from_pretrained(
+        BASE_MODEL,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
         device_map="auto"
     )
-    print("Model loaded")
 
-    print("Loading RAG...")
-    rag = RAGService("./documents")
-    print("RAG ready")
+    print("Loading LoRA weights...")
+    model_loaded = PeftModel.from_pretrained(base_model, PEFT_MODEL)
+    model_loaded.to(device)
+    model_loaded.eval()
 
+    print("Loading tokenizer...")
+    tokenizer_loaded = AutoTokenizer.from_pretrained(BASE_MODEL)
+    tokenizer_loaded.pad_token = tokenizer_loaded.eos_token
 
+    print("Loading RAG service...")
+    rag_service = RAGService("./documents")
+
+    model = model_loaded
+    tokenizer = tokenizer_loaded
+    rag = rag_service
+
+    print("Model and RAG ready.")
+    
 def build_system_prompt():
     """Build the comprehensive system prompt based on project requirements."""
     
